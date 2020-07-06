@@ -1,0 +1,166 @@
+#include <PID_v1.h>
+#include <max6675.h>
+
+//arduino board constants
+const int pin[15] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+/*int LED1 = 9;             // Status LED Pin
+int CS = 10;             // CS pin on MAX6675
+int SO = 12;              // SO pin of MAX6675
+int CLK = 13;             // SCK pin of MAX6675
+int units = 2;            // Units to readout temp (0 = raw, 1 = ˚C, 2 = ˚F)
+float temperature = 0.0;  // Temperature output variable
+*/
+double Setpoint ; // will be the desired value
+double Input; // temperature sensor
+double Output ; //more gas
+//PID parameters
+double Kp=0, Ki=10, Kd=0; 
+ 
+//create PID instance 
+PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+
+// Initialize the MAX6675 Library for our chip
+MAX6675 temp(pin[1],pin[2],pin[3]);
+
+
+ //gas control
+ 
+int ledPin = 10;      // Connect the pin to Arduino pin 10
+int mosfetPin = 2;    // Connect the MOSFeT Gate (first pin on the left, when writing on the chip is facing you) to Arduino pin 2
+void setup()
+{
+  
+   for(int i =0;i<16;i++){
+   pinMode(pin[i],OUTPUT);  
+  }
+  Serial.begin(9600);   
+  //Turn the PID on
+  myPID.SetMode(AUTOMATIC);
+  //Adjust PID values
+  myPID.SetTunings(Kp, Ki, Kd);
+}
+ 
+void loop()
+{
+  //direction and speed control
+  directional_And_Speed_Control(food_Constant[]);
+  foodProcessTime(foodConstant[1]);
+  //read tempearture reading from the MAX6675
+  temperatureToBeRead();
+  //PID calculation
+  myPID.Compute();
+  digitalWrite(pin[],Output);
+  GasSupply(Output);            
+  printData();
+  delay(1000);
+  //on-off controller
+  if(Input>setpoint){
+     //closeAllBurners
+     closeAllGasSupply();    
+    }
+    else{
+     //openAllBurners
+      openTopGasSupply();
+      openBottomGasSupply()
+      }
+}
+
+void directional_And_Speed_Control(int foodProcessingInstruction[]){
+      //speed determination
+      analogWrite(foodProcessingInstruction[1],foodProcessingInstruction[3]);
+      analogWrite(foodProcessingInstruction[1],foodProcessingInstruction[3]);
+   
+      //direction change
+      digitalWrite(foodProcessingInstruction[1],foodProcessingInstruction[4]);
+      digitalWrite(foodProcessingInstruction[1],foodProcessingInstruction[4]);
+      digitalWrite(foodProcessingInstruction[1],foodProcessingInstruction[4]);
+      digitalWrite(foodProcessingInstruction[1],foodProcessingInstruction[4]);  
+  }
+void foodProcessTime(int foodProcessingInstruction[]){
+     delay(foodProcessingInstruction[5]); 
+  }
+void printData(){
+      //Write the output as calculated by the PID function
+      analogWrite(pin[0],Output); //LED is set to digital 3 this is a pwm pin. 
+      //Send data by serial for plotting 
+      Serial.print(Input);
+      Serial.print(" ");
+      Serial.println(Output);
+      Serial.print(" ");  
+      Serial.println(Setpoint);
+      delay(100); 
+  }  
+  temperatureToBeRead(){
+
+       // Read the temp from the MAX6675
+     Input = map(temp.readCelsius(),100,1500,0,255);
+
+  if(temperature < 0) {                   
+    // If there is an error with the TC, temperature will be < 0
+    Serial.print("Thermocouple Error on CS");
+    Serial.println( temperature ); 
+    digitalWrite(pin[3], HIGH);
+  } else {
+    Serial.print("Current Temperature: ");
+    Serial.println( temperature ); 
+    digitalWrite(pin[3], LOW);
+  }
+ 
+  // Wait one second before reading again
+    delay(1000);  
+  
+    }
+    GasSupply(int typeCompute){
+       // do something different depending on the range value:
+       //on-off controller
+       if(typeComputet>setpoint){
+       //closeAllBurners
+       closeAllGasSupply();    
+        }
+        else{
+       //openAllBurners
+       openTopGasSupply();
+       openBottomGasSupply()
+         }
+       /*if(t){}
+  switch (typeCompute) {
+    case 0:    // both
+      
+      openTopGasSupply();
+      openBottomGasSupply();
+      Serial.println("Both top and bottom burnaers are on");
+      break;
+    case 1:    // top part alone
+      openTopGasSupply();
+      Serial.println("Only the top burner is on");
+      break;
+    case 2:    // bottom part alone
+      openBottomGasSupply();
+      Serial.println("Only the bottom burner is on");
+      break;
+    case 3:    // your hand is nowhere near the sensor
+      closeAllGasSupply()
+      Serial.println("Both top and bottom burnaers are off");
+      break;
+  }*/
+      
+      }
+  openTopGasSupply(){
+    digitalWrite(pin[4], HIGH);
+    digitalWrite(pin[5], HIGH);
+    foodProcessTime(foodConstant[5]); 
+    
+    }  
+    openBottomGasSupply(){
+    digitalWrite(pin[6], HIGH);
+    digitalWrite(pin[7], HIGH);
+    foodProcessTime(foodConstant[5]);
+    
+    } 
+    closeAllGasSupply(){
+    digitalWrite(pin[4], LOW);
+    digitalWrite(pin[5], LOW);
+    digitalWrite(pin[6], LOW);
+    digitalWrite(pin[7], LOW);
+    
+      }
